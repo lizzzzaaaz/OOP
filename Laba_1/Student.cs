@@ -1,9 +1,10 @@
-﻿//using System;
-
-namespace Lab1_OOP
+﻿namespace Lab1_OOP
 {
     public class Student
     {
+        public const int MAX_COURSE = 6;
+        private static int _studentCount = 0;
+
         private string _id;
         private string _fullName;
         private int _course;
@@ -18,8 +19,8 @@ namespace Lab1_OOP
             if (string.IsNullOrWhiteSpace(fullName))
                 throw new ArgumentException("ФИО студента не может быть пустым!");
 
-            if (course < 1 || course > 6)
-                throw new ArgumentException("Курс должен быть в диапазоне от 1 до 6!");
+            if (course < 1 || course > MAX_COURSE)
+                throw new ArgumentException($"Курс должен быть в диапазоне от 1 до {MAX_COURSE}!");
 
             if (averageGrade < 2.0 || averageGrade > 5.0)
                 throw new ArgumentException("Средний балл должен быть от 2.0 до 5.0!");
@@ -37,11 +38,18 @@ namespace Lab1_OOP
             {
                 _grades = new int[0];
             }
+
+            _studentCount++;
         }
 
         public Student(string id, string fullName)
             : this(id, fullName, 1, 4.0, new int[] { 4, 4, 4 })
         {
+        }
+
+        public static int GetStudentCount()
+        {
+            return _studentCount;
         }
 
         public string GetId()
@@ -66,7 +74,7 @@ namespace Lab1_OOP
 
         public void PromoteToNextCourse()
         {
-            if (_course >= 6)
+            if (_course >= MAX_COURSE)
                 throw new InvalidOperationException("Студент уже на последнем курсе!");
             _course++;
         }

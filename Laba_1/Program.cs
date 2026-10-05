@@ -50,6 +50,20 @@ namespace Lab1_OOP
             Console.WriteLine($"   Успешно отчислен: {removed}");
             Console.WriteLine($"   Итоговое состояние группы: {group}");
 
+            Console.WriteLine("\nПроверка обработки ошибок:");
+            try
+            {
+                Console.WriteLine("   Попытка создать студента с некорректным 9 курсом...");
+                Student badStudent = new Student("21-ИС-99", "Ошибочный Студент", 9, 7.0, null);
+                Console.WriteLine("   Студент успешно создан!");
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine($"   Перехвачена ошибка: {ex.Message}");
+            }
+
+            Console.WriteLine("\nПрограмма успешно завершила работу.");
+
             Console.WriteLine("\nНажмите любую клавишу для завершения...");
             Console.ReadKey();
         }

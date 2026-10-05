@@ -1,12 +1,10 @@
-﻿//using System;
-
-namespace Lab1_OOP
+﻿namespace Lab1_OOP
 {
     public class Group
     {
         private string _groupName;
-        private Student?[] _students; 
-        private int _count;         
+        private Student?[] _students;
+        private int _count;
 
         public Group(string groupName, int capacity = 30)
         {
@@ -34,6 +32,14 @@ namespace Lab1_OOP
         public bool AddStudent(Student? student)
         {
             if (student == null) return false;
+
+            for (int i = 0; i < _count; i++)
+            {
+                if (_students[i] != null && _students[i]!.GetId() == student.GetId())
+                {
+                    throw new InvalidOperationException($"Студент с зачёткой '{student.GetId()}' уже зачислен в группу!");
+                }
+            }
 
             if (_count >= _students.Length)
             {
@@ -87,7 +93,6 @@ namespace Lab1_OOP
 
             return null;
         }
-
 
         public double GetGroupAverage()
         {
