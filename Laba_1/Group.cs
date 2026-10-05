@@ -117,6 +117,32 @@
             return result;
         }
 
+        public Student[] GetHonorsStudents()
+        {
+            int honorsCount = 0;
+            for (int i = 0; i < _count; i++)
+            {
+                if (_students[i] != null && _students[i]!.GetAverageGrade() == 5.0)
+                {
+                    honorsCount++;
+                }
+            }
+
+            Student[] result = new Student[honorsCount];
+
+            int index = 0;
+            for (int i = 0; i < _count; i++)
+            {
+                if (_students[i] != null && _students[i]!.GetAverageGrade() == 5.0)
+                {
+                    result[index] = _students[i]!;
+                    index++;
+                }
+            }
+
+            return result;
+        }
+
         public override string ToString()
         {
             return $"Группа {_groupName} (Студентов: {_count}, Ср.балл группы: {GetGroupAverage():F2})";
