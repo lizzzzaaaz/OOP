@@ -1,55 +1,44 @@
-﻿namespace Lab1_OOP
+﻿namespace Lab2_OOP
 {
-    public class Student
+    public abstract class Student
     {
         public const int MAX_COURSE = 6;
         private static int _studentCount = 0;
 
-        private string _id;
-        private string _fullName;
-        private int _course;
-        private double _averageGrade;
-        private int[] _grades;
+        protected string _id;
+        protected string _fullName;
+        protected int _course;
+        protected Marks _marks;
+        protected ScholarshipRule _scholarshipRule;
 
-        public Student(string id, string fullName, int course, double averageGrade, int[]? initialGrades)
+        protected Student(string id, string fullName, int course, int[]? initialGrades, ScholarshipRule rule)
         {
             if (string.IsNullOrWhiteSpace(id))
+            {
                 throw new ArgumentException("Номер зачетной книжки не может быть пустым!");
+            }
 
             if (string.IsNullOrWhiteSpace(fullName))
+            {
                 throw new ArgumentException("ФИО студента не может быть пустым!");
+            }
 
             if (course < 1 || course > MAX_COURSE)
+            {
                 throw new ArgumentException($"Курс должен быть в диапазоне от 1 до {MAX_COURSE}!");
+            }
 
-            if (averageGrade < 2.0 || averageGrade > 5.0)
-                throw new ArgumentException("Средний балл должен быть от 2.0 до 5.0!");
+            if (rule == null)
+            {
+                throw new ArgumentNullException(nameof(rule), "Правило стипендии не может быть null!");
+            }
 
             _id = id;
             _fullName = fullName;
             _course = course;
-            _averageGrade = averageGrade;
-
-            if (initialGrades != null)
-            {
-                _grades = (int[])initialGrades.Clone();
-            }
-            else
-            {
-                _grades = new int[0];
-            }
-
+            _marks = new Marks(initialGrades);
+            _scholarshipRule = rule;
             _studentCount++;
-        }
-
-        public Student(string id, string fullName)
-            : this(id, fullName, 1, 4.0, new int[] { 4, 4, 4 })
-        {
-        }
-
-        public static int GetStudentCount()
-        {
-            return _studentCount;
         }
 
         public string GetId()
@@ -67,64 +56,83 @@
             return _course;
         }
 
-        public double GetAverageGrade()
-        {
-            return _averageGrade;
-        }
+        public abstract double GetRating();
 
-        public void PromoteToNextCourse()
+        public void Promote()
         {
             if (_course >= MAX_COURSE)
+            {
                 throw new InvalidOperationException("Студент уже на последнем курсе!");
+            }
             _course++;
         }
 
         public void AddMark(int mark)
         {
-            AddMark(new int[] { mark });
+            _marks.AddMark(mark);
         }
 
-        public void AddMark(int[]? marks)
+        public double GetAverageGrade()
         {
-            if (marks == null || marks.Length == 0) return;
+            return _marks.GetAverage();
+        }
 
-            foreach (var m in marks)
+        public double GetScholarship()
+        {
+            return _scholarshipRule.CalculateScholarship(GetAverageGrade());
+        }
+
+        public void SetScholarshipRule(ScholarshipRule rule)
+        {
+            if (rule == null)
             {
-                if (m < 2 || m > 5)
-                    throw new ArgumentException($"Оценка {m} недопустима (должна быть от 2 до 5)!");
+                throw new ArgumentNullException(nameof(rule));
             }
-
-            int oldLen = _grades.Length;
-            Array.Resize(ref _grades, oldLen + marks.Length);
-            Array.Copy(marks, 0, _grades, oldLen, marks.Length);
-
-            RecalculateAverage();
-        }
-
-        private void RecalculateAverage()
-        {
-            if (_grades.Length == 0) return;
-            double sum = 0;
-            foreach (var g in _grades)
-            {
-                sum += g;
-            }
-            _averageGrade = sum / _grades.Length;
-        }
-
-        public int[] GetGradesUnsafe()
-        {
-            return _grades;
-        }
-
-        public int[] GetGradesSafe()
-        {
-            return (int[])_grades.Clone();
+            _scholarshipRule = rule;
         }
 
         public override string ToString()
         {
-            return $"[Зачетка: {_id}] {_fullName}, Курс: {_course}, Ср.балл: {_averageGrade:F2}";
+            return $"[Зачетка: {_id}] {_fullName}, Курс: {_course}, Ср.балл: {GetAverageGrade():F2}, Рейтинг: {GetRating():F2}, Стипендия: {GetScholarship()} руб.";
+        }
+    }
+
+    public class BudgetStudent : Student
+    {
+        public BudgetStudent(string id, string fullName, int course, int[]? grades, ScholarshipRule rule)
+            : base(id, fullName, course, grades, rule)
+        {
+        }
+
+        public override double GetRating()
+        {
+            return GetAverageGrade() * 1.1;
+        }
+    }
+
+    public class ContractStudent : Student
+    {
+        public ContractStudent(string id, string fullName, int course, int[]? grades, ScholarshipRule rule)
+            : base(id, fullName, course, grades, rule)
+        {
+        }
+
+        public override double GetRating()
+        {
+            return GetAverageGrade();
+        }
+    }
+
+    public class ExchangeStudent : Student
+    {
+        public ExchangeStudent(string id, string fullName, int course, int[]? grades, ScholarshipRule rule)
+            : base(id, fullName, course, grades, rule)
+        {
+        }
+
+        public override double GetRating()
+        {
+            return GetAverageGrade() * 0.95;
         }
     }
 }
