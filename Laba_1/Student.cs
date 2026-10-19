@@ -238,7 +238,7 @@ namespace Lab2_OOP
         }
     }
 
-    public class TargetStudent : Student
+    public class TargetStudent : Student, IWorkable
     {
         private string _enterpriseName;
         private int _workingYearsRequired;
