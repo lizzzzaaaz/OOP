@@ -1,5 +1,38 @@
-﻿namespace Lab2_OOP
+﻿using System;
+using System.Collections.Generic;
+
+namespace Lab2_OOP
 {
+    public class EducationForm
+    {
+        private string _name;
+
+        public EducationForm(string name)
+        {
+            _name = name;
+        }
+
+        public string GetName()
+        {
+            return _name;
+        }
+    }
+
+    public class Achievement
+    {
+        private string _title;
+
+        public Achievement(string title)
+        {
+            _title = title;
+        }
+
+        public string GetTitle()
+        {
+            return _title;
+        }
+    }
+
     public abstract class Student
     {
         public const int MAX_COURSE = 6;
@@ -11,7 +44,10 @@
         protected Marks _marks;
         protected ScholarshipRule _scholarshipRule;
 
-        protected Student(string id, string fullName, int course, int[]? initialGrades, ScholarshipRule rule)
+        protected EducationForm _educationForm;
+        protected List<Achievement> _achievements;
+
+        protected Student(string id, string fullName, int course, int[] initialGrades, ScholarshipRule rule, EducationForm educationForm, List<Achievement> achievements = null)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
@@ -33,11 +69,27 @@
                 throw new ArgumentNullException(nameof(rule), "Правило стипендии не может быть null!");
             }
 
+            if (educationForm == null)
+            {
+                throw new ArgumentNullException(nameof(educationForm), "Форма обучения не может быть null!");
+            }
+
             _id = id;
             _fullName = fullName;
             _course = course;
             _marks = new Marks(initialGrades);
             _scholarshipRule = rule;
+            _educationForm = educationForm;
+
+            if (achievements != null)
+            {
+                _achievements = achievements;
+            }
+            else
+            {
+                _achievements = new List<Achievement>();
+            }
+
             _studentCount++;
         }
 
@@ -56,7 +108,32 @@
             return _course;
         }
 
-        public abstract double GetRating();
+        public EducationForm GetEducationForm()
+        {
+            return _educationForm;
+        }
+
+        public List<Achievement> GetAchievements()
+        {
+            return _achievements;
+        }
+
+        public void AddAchievement(Achievement achievement)
+        {
+            if (achievement != null)
+            {
+                _achievements.Add(achievement);
+            }
+        }
+
+        public virtual double GetRating()
+        {
+            double bonus = _achievements.Count * 0.05;
+            return GetAverageGrade() + bonus;
+        }
+
+        public abstract bool CanBeAdmitted();
+        public abstract bool ShouldBeExpelled();
 
         public void Promote()
         {
@@ -93,46 +170,120 @@
 
         public override string ToString()
         {
-            return $"[Зачетка: {_id}] {_fullName}, Курс: {_course}, Ср.балл: {GetAverageGrade():F2}, Рейтинг: {GetRating():F2}, Стипендия: {GetScholarship()} руб.";
+            string achievementsStr = "нет";
+            if (_achievements.Count > 0)
+            {
+                List<string> titles = new List<string>();
+                foreach (var a in _achievements)
+                {
+                    titles.Add(a.GetTitle());
+                }
+                achievementsStr = string.Join(", ", titles);
+            }
+
+            return $"[Зачетка: {_id}] {_fullName}, Курс: {_course}, Форма: {_educationForm.GetName()}, Достижения: [{achievementsStr}], Ср.балл: {GetAverageGrade():F2}, Рейтинг: {GetRating():F2}, Стипендия: {GetScholarship()} руб.";
         }
     }
 
     public class BudgetStudent : Student
     {
-        public BudgetStudent(string id, string fullName, int course, int[]? grades, ScholarshipRule rule)
-            : base(id, fullName, course, grades, rule)
+        public BudgetStudent(string id, string fullName, int course, int[] grades, ScholarshipRule rule, List<Achievement> achievements = null)
+            : base(id, fullName, course, grades, rule, new EducationForm("Бюджет"), achievements)
         {
         }
 
-        public override double GetRating()
+        public override bool CanBeAdmitted()
         {
-            return GetAverageGrade() * 1.1;
+            return GetAverageGrade() >= 3.0;
+        }
+
+        public override bool ShouldBeExpelled()
+        {
+            return GetAverageGrade() < 2.5;
         }
     }
 
     public class ContractStudent : Student
     {
-        public ContractStudent(string id, string fullName, int course, int[]? grades, ScholarshipRule rule)
-            : base(id, fullName, course, grades, rule)
+        public ContractStudent(string id, string fullName, int course, int[] grades, ScholarshipRule rule, List<Achievement> achievements = null)
+            : base(id, fullName, course, grades, rule, new EducationForm("Контракт"), achievements)
         {
         }
 
-        public override double GetRating()
+        public override bool CanBeAdmitted()
         {
-            return GetAverageGrade();
+            return GetAverageGrade() >= 2.5;
+        }
+
+        public override bool ShouldBeExpelled()
+        {
+            return GetAverageGrade() < 2.0;
         }
     }
 
     public class ExchangeStudent : Student
     {
-        public ExchangeStudent(string id, string fullName, int course, int[]? grades, ScholarshipRule rule)
-            : base(id, fullName, course, grades, rule)
+        public ExchangeStudent(string id, string fullName, int course, int[] grades, ScholarshipRule rule, List<Achievement> achievements = null)
+            : base(id, fullName, course, grades, rule, new EducationForm("Обмен"), achievements)
         {
         }
 
-        public override double GetRating()
+        public override bool CanBeAdmitted()
         {
-            return GetAverageGrade() * 0.95;
+            return GetAverageGrade() >= 3.5;
+        }
+
+        public override bool ShouldBeExpelled()
+        {
+            return GetAverageGrade() < 3.0;
+        }
+    }
+
+    public class TargetStudent : Student
+    {
+        private string _enterpriseName;
+        private int _workingYearsRequired;
+
+        public TargetStudent(string id, string fullName, int course, int[] grades, ScholarshipRule rule, string enterpriseName, int workingYearsRequired, List<Achievement> achievements = null)
+            : base(id, fullName, course, grades, rule, new EducationForm("Целевое"), achievements)
+        {
+            if (string.IsNullOrWhiteSpace(enterpriseName))
+            {
+                throw new ArgumentException("Название предприятия не может быть пустым!");
+            }
+
+            if (workingYearsRequired <= 0)
+            {
+                throw new ArgumentException("Срок отработки должен быть больше 0!");
+            }
+
+            _enterpriseName = enterpriseName;
+            _workingYearsRequired = workingYearsRequired;
+        }
+
+        public string GetEnterpriseName()
+        {
+            return _enterpriseName;
+        }
+
+        public int GetWorkingYearsRequired()
+        {
+            return _workingYearsRequired;
+        }
+
+        public override bool CanBeAdmitted()
+        {
+            return GetAverageGrade() >= 3.0;
+        }
+
+        public override bool ShouldBeExpelled()
+        {
+            return GetAverageGrade() < 2.8;
+        }
+
+        public override string ToString()
+        {
+            return base.ToString() + $", Целевик: {_enterpriseName} (отработка: {_workingYearsRequired} лет)";
         }
     }
 }
